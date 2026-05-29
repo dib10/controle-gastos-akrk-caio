@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\CategoryService;
+use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
@@ -25,10 +26,41 @@ class CategoryController extends Controller
     public function store(Request $request) 
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->where(function ($query) use ($request) {
+                    return $query->where('user_id', $request->user()->id);
+                }),
+            ],
         ]);
         $category = $this->categoryService->createCategory($validated, $request->user()->id);
         return response()->json($category, 201); //criado
+    }
+
+    public function update($id, Request $request)
+    {
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')
+                    ->where(function ($query) use ($request) {
+                        return $query->where('user_id', $request->user()->id);
+                    })
+                    ->ignore($id),
+            ],
+        ]);
+
+        $category = $this->categoryService->updateCategory($id, $validated, $request->user()->id);
+
+        if (!$category) {
+            return response()->json(['message' => 'Categoria não encontrada ou você não tem permissão para editá-la.'], 403);
+        }
+
+        return response()->json($category);
     }
 
     public function destroy($id, Request $request) 

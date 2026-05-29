@@ -21,6 +21,22 @@ class CategoryService
         ]);
     }
 
+    // atualiza a categoria
+    public function updateCategory($categoryId, array $data, $userId)
+    {
+        $category = Category::where('id', $categoryId)->where('user_id', $userId)->first();
+
+        if (!$category) {
+            return null;
+        }
+
+        $category->update([
+            'name' => $data['name'],
+        ]);
+
+        return $category;
+    }
+
     //exclui a categoria
     public function deleteCategory($categoryId, $userId)
     {
